@@ -1,31 +1,19 @@
-nodejs: 18
 name: monastyr-backend
+type: node
+env: 18
 
-scripts:
-  build: |
-    cd backend
-    npm install --legacy-peer-deps
-    npx prisma generate
-    npm run build
-  start: |
-    cd backend
-    npm start
+build:
+  command: cd backend && npm install && npx prisma generate && npm run build
+  output: backend/dist
+
+start:
+  command: cd backend && node dist/index.js
 
 env:
   NODE_ENV: production
   PORT: 3000
-  DATABASE_URL: mysql://gen_user:qazxsw21@192.168.0.4:3306/default_db
-  JWT_SECRET: super-secret-key-change-in-production
-  ADMIN_REGISTRATION_KEY: change-this-in-production
-  UPLOAD_DIR: /app/uploads
+  DATABASE_URL: ${DATABASE_URL}
+  JWT_SECRET: ${JWT_SECRET}
+  ADMIN_REGISTRATION_KEY: ${ADMIN_REGISTRATION_KEY}
+  UPLOAD_DIR: /var/www/uploads
   MAX_FILE_SIZE: 10485760
-      
-  frontend:
-    source: webapp
-    build:
-      cmd: npm install --legacy-peer-deps && npm run build
-    static:
-      dir: dist
-    env:
-      NODE_ENV: production
-      VITE_API_URL: https://your-backend-domain.timeweb.app

@@ -1,18 +1,14 @@
 {
-  "name": "@monastyr/webapp",
+  "name": "monastyr-frontend",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
-    "lint": "eslint --cache --cache-location ./node_modules/.cache/.eslintcache --ext .ts .",
-    "preview": "vite preview",
-    "types": "tsc --noEmit --project ./tsconfig.json && tsc --noEmit --project ./tsconfig.node.json",
-    "prettify": "prettier --loglevel warn --cache --write '{src/**/*,*}.{ts,tsx,js,json,yml,scss}' '!**/{node_modules,dist}/**/*'"
+    "build": "rm -rf dist && tsc && vite build",
+    "preview": "vite preview"
   },
   "dependencies": {
-    "@monastyr/backend": "workspace:*",
     "@tanstack/react-query": "^5.71.5",
     "@trpc/client": "^11.0.1",
     "@trpc/react-query": "^11.0.1",

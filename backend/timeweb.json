@@ -2,30 +2,15 @@
   "name": "monastyr-backend",
   "version": "1.0.0",
   "build": {
-    "command": "npm install --legacy-peer-deps && npx prisma generate && npm run build",
+    "command": "npm install && npx prisma generate && npm run build",
     "output": "dist"
   },
   "start": {
-    "command": "npm start"
+    "command": "node dist/index.js"
   },
   "env": {
     "NODE_ENV": "production",
-    "PORT": "3000"
-  },
-  "dependencies": {
-    "@prisma/client": "^6.7.0",
-    "@trpc/server": "^11.0.1",
-    "bcryptjs": "^3.0.2",
-    "cors": "^2.8.5",
-    "express": "^4.21.2",
-    "dotenv": "^16.4.5",
-    "jsonwebtoken": "^9.0.2"
-  },
-  "devDependencies": {
-    "typescript": "~5.7.2",
-    "prisma": "^6.7.0",
-    "ts-node": "^10.9.1",
-    "@types/express": "4.17.21",
-    "@types/node": "^20.17.30"
+    "PORT": "3000",
+    "UPLOAD_DIR": "/var/www/uploads"
   }
 }

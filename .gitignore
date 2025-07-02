@@ -69,7 +69,7 @@ backend/uploads/**/*
 !backend/uploads/images/.gitkeep
 !backend/uploads/test/.gitkeep
 
-# Docker
-.docker
+# Timeweb Cloud
+.timeweb
 *.tar.gz
 
