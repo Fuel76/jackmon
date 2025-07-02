@@ -1,2 +1,48 @@
+# Dependencies
 node_modules
+.pnpm-store
+
+# Build outputs
+dist
+build
+.next
+out
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# IDE files
+.vscode
+.idea
+*.sublime-*
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Backup files
+backend/backups/*
+*.backup
+*.bak
+*.zip
+
+# Upload directories
+backend/uploads/**/*
+!backend/uploads/documents/.gitkeep
+!backend/uploads/images/.gitkeep
+!backend/uploads/test/.gitkeep
+
+# Docker
+.docker
+*.tar.gz
 
