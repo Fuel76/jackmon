@@ -22,7 +22,7 @@ import trebyNewRouter from './routes/trebyNew';
 import paymentsRouter from './routes/payments';
 import notificationsRouter from './routes/notifications';
 import calendarEventsRouter from './routes/calendarEvents';
-import trebaTypesRouter from './routes/trebaTypes';
+import требаTypesRouter from './routes/trebaTypes';
 import требаFormFieldsRouter from './routes/trebaFormFields';
 import требаPricingRulesRouter from './routes/trebaPricingRulesNew';
 import scheduleRouter from './routes/schedule';
@@ -56,7 +56,7 @@ app.use(helmet({
 app.use(corsMiddleware);
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? process.env.FRONTEND_URL 
+    ? [process.env.FRONTEND_URL || '', new RegExp('\\.timeweb\\.app$'), new RegExp('\\.timeweb\\.cloud$')]
     : ['http://localhost:5173', 'http://localhost:3000'],
   credentials: true,
 }));
@@ -96,7 +96,7 @@ app.use('/api/v2/treby', trebyNewRouter); // Новый роутер треб с
 app.use('/api/payments', paymentsRouter); // Роутер платежей
 app.use('/api/notifications', notificationsRouter); // Роутер уведомлений
 app.use('/api/calendar-events', calendarEventsRouter); // Роутер календарных событий
-app.use('/api/treba-types', trebaTypesRouter); // Роутер типов треб
+app.use('/api/treba-types', требаTypesRouter); // Роутер типов треб
 app.use('/api/treba-form-fields', требаFormFieldsRouter);
 app.use('/api/treba-pricing-rules', требаPricingRulesRouter);
 app.use('/api/schedule', scheduleRouter);

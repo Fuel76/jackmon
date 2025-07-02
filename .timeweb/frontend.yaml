@@ -1,0 +1,11 @@
+name: monastyr-frontend
+version: 1.0.0
+type: node
+source:
+  directory: webapp
+build:
+  command: npm install && npm run build
+static:
+  directory: dist
+env:
+  NODE_ENV: production

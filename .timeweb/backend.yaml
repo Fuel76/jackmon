@@ -1,0 +1,12 @@
+name: monastyr-backend
+version: 1.0.0
+type: node
+source:
+  directory: backend
+build:
+  command: npm install && npx prisma generate && npm run build
+start:
+  command: npm start
+env:
+  NODE_ENV: production
+  PORT: 3000

@@ -1,0 +1,24 @@
+project:
+  name: monastyr
+  type: nodejs
+  env: 18
+
+services:
+  backend:
+    source: backend
+    build:
+      cmd: npm install --legacy-peer-deps && npx prisma generate && npm run build
+    run:
+      cmd: npm start
+    env:
+      NODE_ENV: production
+      PORT: 3000
+      
+  frontend:
+    source: webapp
+    build:
+      cmd: npm install --legacy-peer-deps && npm run build
+    static:
+      dir: dist
+    env:
+      NODE_ENV: production
