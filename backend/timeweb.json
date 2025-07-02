@@ -2,11 +2,11 @@
   "name": "monastyr-backend",
   "version": "1.0.0",
   "build": {
-    "command": "cd backend && npm install --legacy-peer-deps && npx prisma generate && npm run build",
-    "output": "backend/dist"
+    "command": "npm install --legacy-peer-deps && npx prisma generate && npm run build",
+    "output": "dist"
   },
   "start": {
-    "command": "cd backend && npm start"
+    "command": "npm start"
   },
   "env": {
     "NODE_ENV": "production",
