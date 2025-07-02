@@ -4,13 +4,33 @@ import { PrismaClient } from '@prisma/client';
 const router = Router();
 const prisma = new PrismaClient();
 
+// Функция для транслитерации кириллицы в латиницу
+function transliterate(text: string): string {
+  const map: Record<string, string> = {
+    'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'yo',
+    'ж': 'zh', 'з': 'z', 'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm',
+    'н': 'n', 'о': 'o', 'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u',
+    'ф': 'f', 'х': 'h', 'ц': 'ts', 'ч': 'ch', 'ш': 'sh', 'щ': 'sch',
+    'ъ': '', 'ы': 'y', 'ь': '', 'э': 'e', 'ю': 'yu', 'я': 'ya',
+    'А': 'A', 'Б': 'B', 'В': 'V', 'Г': 'G', 'Д': 'D', 'Е': 'E', 'Ё': 'Yo',
+    'Ж': 'Zh', 'З': 'Z', 'И': 'I', 'Й': 'Y', 'К': 'K', 'Л': 'L', 'М': 'M',
+    'Н': 'N', 'О': 'O', 'П': 'P', 'Р': 'R', 'С': 'S', 'Т': 'T', 'У': 'U',
+    'Ф': 'F', 'Х': 'H', 'Ц': 'Ts', 'Ч': 'Ch', 'Ш': 'Sh', 'Щ': 'Sch',
+    'Ъ': '', 'Ы': 'Y', 'Ь': '', 'Э': 'E', 'Ю': 'Yu', 'Я': 'Ya',
+    ' ': '_', '/': '_', '\\': '_', '(': '', ')': '', '[': '', ']': '',
+    '{': '', '}': '', '|': '_', '?': '', '*': '', '<': '', '>': '',
+    '"': '', "'": '', ':': '', ';': '', ',': '', '.': ''
+  };
+
+  return text.split('').map(char => map[char] || char).join('');
+}
+
 // Функция для валидации и обработки имен
-async function processNames(names: { name: string; type: string }[]) {
+async function processNames(names: { name: string }[]) {
   const processedNames = [];
   
   for (const nameObj of names) {
     const name = nameObj.name;
-    const type = nameObj.type;
     
     if (!name || !name.trim()) continue;
     
@@ -19,7 +39,6 @@ async function processNames(names: { name: string; type: string }[]) {
     
     processedNames.push({
       name: name.trim(),
-      type: type as any, // Приведение к типу enum
       isValid,
       validationError: isValid ? null : 'Имя содержит недопустимые символы',
       churchForm: isValid ? name.trim() : null,
@@ -70,6 +89,7 @@ router.post('/', async (req, res) => {
   try {
     const { 
       type, 
+      nameType,
       names, 
       note, 
       period = 'Разовое', 
@@ -80,9 +100,9 @@ router.post('/', async (req, res) => {
     } = req.body;
 
     // Валидация входных данных
-    if (!type || !names || !Array.isArray(names)) {
+    if (!type || !nameType || !names || !Array.isArray(names)) {
       return res.status(400).json({ 
-        error: 'Отсутствуют обязательные поля: type, names (должен быть массивом)' 
+        error: 'Отсутствуют обязательные поля: type, nameType, names (должен быть массивом)' 
       });
     }
 
@@ -98,6 +118,7 @@ router.post('/', async (req, res) => {
       const treba = await tx.treba.create({
         data: {
           type,
+          nameType,
           period,
           note,
           userId: userId || null,
@@ -192,6 +213,140 @@ router.get('/', async (req, res) => {
   } catch (error) {
     console.error('Error fetching Treby:', error);
     res.status(500).json({ error: 'Ошибка при получении заявок' });
+  }
+});
+
+// Получение сводки по типам треб и именам
+router.get('/mass-summary', async (req, res) => {
+  try {
+    const { status } = req.query;
+
+    const where: any = {};
+    
+    // Фильтр по статусу (только необработанные по умолчанию)
+    if (status) {
+      where.status = status as string;
+    } else {
+      where.status = { in: ['PENDING', 'PAID'] }; // Необработанные
+    }
+
+    const treby = await prisma.treba.findMany({
+      where,
+      include: {
+        _count: {
+          select: {
+            names: true
+          }
+        }
+      }
+    });
+
+    // Группируем по типу требы и типу имен
+    const summary: Record<string, Record<string, { count: number; namesCount: number }>> = {};
+
+    treby.forEach(treba => {
+      const trebaType = treba.type;
+      const nameType = treba.nameType || 'UNKNOWN';
+      
+      if (!summary[trebaType]) {
+        summary[trebaType] = {};
+      }
+      
+      if (!summary[trebaType][nameType]) {
+        summary[trebaType][nameType] = { count: 0, namesCount: 0 };
+      }
+      
+      summary[trebaType][nameType].count += 1;
+      summary[trebaType][nameType].namesCount += treba._count.names;
+    });
+
+    res.json({ summary });
+  } catch (error) {
+    console.error('Error getting mass summary:', error);
+    res.status(500).json({ error: 'Ошибка при получении сводки' });
+  }
+});
+
+// Массовое скачивание имен по типу требы и типу имен
+router.get('/mass-download', async (req, res) => {
+  try {
+    const { trebaType, nameType, status } = req.query;
+
+    if (!trebaType || !nameType) {
+      return res.status(400).json({ 
+        error: 'Необходимо указать trebaType и nameType' 
+      });
+    }
+
+    const where: any = {
+      type: trebaType as string,
+      nameType: nameType as any,
+    };
+
+    // Фильтр по статусу (только необработанные по умолчанию)
+    if (status) {
+      where.status = status as string;
+    } else {
+      where.status = { in: ['PENDING', 'PAID'] }; // Необработанные
+    }
+
+    const treby = await prisma.treba.findMany({
+      where,
+      include: {
+        names: {
+          orderBy: { name: 'asc' }
+        }
+      },
+      orderBy: { createdAt: 'asc' }
+    });
+
+    if (treby.length === 0) {
+      return res.status(404).json({ 
+        error: 'Не найдено треб по указанным критериям' 
+      });
+    }
+
+    // Формируем объединенный CSV
+    const nameTypeText = nameType === 'ZA_ZDRAVIE' ? 'за здравие' : 'за упокой';
+    let csvContent = `Треба: ${trebaType} (${nameTypeText})\n`;
+    csvContent += `Количество заказов: ${treby.length}\n`;
+    csvContent += `Дата формирования: ${new Date().toLocaleDateString('ru-RU')}\n\n`;
+
+    let totalNames = 0;
+    treby.forEach((treba, trebaIndex) => {
+      csvContent += `\n--- Заказ ${trebaIndex + 1} (ID: ${treba.id}) ---\n`;
+      csvContent += `Дата: ${new Date(treba.createdAt).toLocaleDateString('ru-RU')}\n`;
+      csvContent += `Статус: ${treba.status}\n`;
+      if (treba.note) {
+        csvContent += `Примечание: ${treba.note}\n`;
+      }
+      csvContent += `Имена:\n`;
+      
+      treba.names.forEach((name: any, nameIndex: number) => {
+        csvContent += `${nameIndex + 1}. ${name.name}\n`;
+        totalNames++;
+      });
+    });
+
+    csvContent += `\n--- ИТОГО ---\n`;
+    csvContent += `Всего имен: ${totalNames}\n`;
+
+    // Создаем безопасное имя файла с транслитерацией
+    const nameTypeForFile = nameType === 'ZA_ZDRAVIE' ? 'za_zdravie' : 'za_upokoy';
+    const safeTreebaType = transliterate(trebaType as string);
+    const date = new Date().toISOString().split('T')[0];
+    const filename = `${safeTreebaType}_${nameTypeForFile}_${date}.csv`;
+    
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Encoding', 'UTF-8');
+    
+    // Добавляем BOM для корректного отображения кириллицы в Excel
+    res.write('\uFEFF');
+    res.end(csvContent);
+  } catch (error) {
+    console.error('Error mass downloading names:', error);
+    res.status(500).json({ error: 'Ошибка при массовом скачивании имен' });
   }
 });
 

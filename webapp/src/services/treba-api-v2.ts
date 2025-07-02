@@ -378,4 +378,45 @@ export class TrebaTypesApiV2 {
     
     return response.json();
   }
+
+  // Скачать имена для конкретной требы
+  static async downloadNamesForTreba(trebaId: number): Promise<Blob> {
+    const response = await fetch(`${API_BASE}/treby/${trebaId}/names/download`);
+    if (!response.ok) {
+      throw new Error(`Ошибка скачивания имен: ${response.statusText}`);
+    }
+    
+    return response.blob();
+  }
+
+  // Массовое скачивание имен по типу требы и типу имен
+  static async massDownloadNames(trebaType: string, nameType: string, status?: string): Promise<Blob> {
+    const searchParams = new URLSearchParams();
+    searchParams.set('trebaType', trebaType);
+    searchParams.set('nameType', nameType);
+    if (status) searchParams.set('status', status);
+
+    const response = await fetch(`${API_BASE}/treby/mass-download?${searchParams.toString()}`);
+    if (!response.ok) {
+      throw new Error(`Ошибка массового скачивания: ${response.statusText}`);
+    }
+    
+    return response.blob();
+  }
+
+  // Получить сводку по необработанным требам для массовой обработки
+  static async getMassSummary(): Promise<Array<{
+    trebaType: string;
+    nameType: 'ZA_ZDRAVIE' | 'ZA_UPOKOY';
+    trebyCount: number;
+    namesCount: number;
+    totalPrice: number;
+  }>> {
+    const response = await fetch(`${API_BASE}/treby/mass-summary`);
+    if (!response.ok) {
+      throw new Error(`Ошибка получения сводки: ${response.statusText}`);
+    }
+    
+    return response.json();
+  }
 }

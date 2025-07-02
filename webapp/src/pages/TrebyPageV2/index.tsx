@@ -6,12 +6,12 @@ import '../../styles/system-pages.css';
 
 interface NameEntry {
   name: string;
-  type: 'ZA_ZDRAVIE' | 'ZA_UPOKOY';
 }
 
 const TrebyPageV2: React.FC = () => {
   const [formData, setFormData] = useState({
     type: '',
+    nameType: 'ZA_ZDRAVIE' as 'ZA_ZDRAVIE' | 'ZA_UPOKOY',
     period: '',
     note: '',
     email: '',
@@ -19,7 +19,7 @@ const TrebyPageV2: React.FC = () => {
   });
   
   const [names, setNames] = useState<NameEntry[]>([
-    { name: '', type: 'ZA_ZDRAVIE' }
+    { name: '' }
   ]);
   
   const [trebaTypes, setTrebaTypes] = useState<TrebaTypeV2[]>([]);
@@ -58,7 +58,7 @@ const TrebyPageV2: React.FC = () => {
   ];
 
   const addNameField = () => {
-    setNames([...names, { name: '', type: 'ZA_ZDRAVIE' }]);
+    setNames([...names, { name: '' }]);
   };
 
   const removeNameField = (index: number) => {
@@ -129,6 +129,7 @@ const TrebyPageV2: React.FC = () => {
     try {
       const requestData: CreateTrebaRequestV2 = {
         type: formData.type,
+        nameType: formData.nameType,
         period: formData.period,
         names: validNames,
         note: formData.note || undefined,
@@ -157,11 +158,12 @@ const TrebyPageV2: React.FC = () => {
       setFormData(prev => ({ 
         ...prev, 
         type: '', 
+        nameType: 'ZA_ZDRAVIE',
         period: '', 
         note: '', 
         isAnonymous: false 
       }));
-      setNames([{ name: '', type: 'ZA_ZDRAVIE' }]);
+      setNames([{ name: '' }]);
 
     } catch (err: any) {
       setError(err.message || 'Ошибка отправки требы');
@@ -248,6 +250,20 @@ const TrebyPageV2: React.FC = () => {
               </select>
             </div>
 
+            {/* Тип имен */}
+            <div className="system-form-group">
+              <label className="system-form-label">Тип имен *</label>
+              <select
+                value={formData.nameType}
+                onChange={e => setFormData(prev => ({ ...prev, nameType: e.target.value as 'ZA_ZDRAVIE' | 'ZA_UPOKOY' }))}
+                className="system-input"
+                required
+              >
+                <option value="ZA_ZDRAVIE">За здравие</option>
+                <option value="ZA_UPOKOY">За упокой</option>
+              </select>
+            </div>
+
             {/* Имена */}
             <div className="system-form-group">
               <label className="system-form-label">Имена *</label>
@@ -261,15 +277,6 @@ const TrebyPageV2: React.FC = () => {
                     className="system-input"
                     style={{ flex: 1 }}
                   />
-                  <select
-                    value={nameEntry.type}
-                    onChange={e => updateNameField(index, 'type', e.target.value as 'ZA_ZDRAVIE' | 'ZA_UPOKOY')}
-                    className="system-input"
-                    style={{ width: '150px' }}
-                  >
-                    <option value="ZA_ZDRAVIE">За здравие</option>
-                    <option value="ZA_UPOKOY">За упокой</option>
-                  </select>
                   {names.length > 1 && (
                     <button
                       type="button"

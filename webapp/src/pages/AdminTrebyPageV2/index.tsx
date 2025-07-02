@@ -1,6 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { TrebaV2, TrebaListResponseV2 } from '../../types/treba-v2';
-import { TrebaApiV2, PaymentApiV2, NotificationApiV2 } from '../../services/treba-api-v2';
+import { TrebaApiV2, NotificationApiV2 } from '../../services/treba-api-v2';
+
+interface MassSummaryItem {
+  trebaType: string;
+  nameType: 'ZA_ZDRAVIE' | 'ZA_UPOKOY';
+  trebyCount: number;
+  namesCount: number;
+  totalPrice: number;
+}
 
 const AdminTrebyPageV2: React.FC = () => {
   const [treby, setTreby] = useState<TrebaV2[]>([]);
@@ -18,6 +26,9 @@ const AdminTrebyPageV2: React.FC = () => {
     type: '',
     search: '',
   });
+
+  const [massSummary, setMassSummary] = useState<MassSummaryItem[]>([]);
+  const [loadingMassSummary, setLoadingMassSummary] = useState(false);
 
   const loadTreby = async (page = 1) => {
     try {
@@ -41,7 +52,60 @@ const AdminTrebyPageV2: React.FC = () => {
 
   useEffect(() => {
     loadTreby(1);
+    loadMassSummary();
   }, [filters]);
+
+  const loadMassSummary = async () => {
+    try {
+      setLoadingMassSummary(true);
+      const response = await fetch('http://localhost:3000/api/v2/treby/mass-summary');
+      if (!response.ok) throw new Error('Ошибка загрузки сводки');
+      const data = await response.json();
+      setMassSummary(data);
+    } catch (err: any) {
+      console.error('Ошибка загрузки массовой сводки:', err);
+    } finally {
+      setLoadingMassSummary(false);
+    }
+  };
+
+  const downloadNamesForTreba = async (trebaId: number) => {
+    try {
+      const response = await fetch(`http://localhost:3000/api/v2/treby/${trebaId}/names/download`);
+      if (!response.ok) throw new Error('Ошибка скачивания');
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `treba_${trebaId}_names.csv`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err: any) {
+      alert(`Ошибка скачивания: ${err.message}`);
+    }
+  };
+
+  const massDownloadNames = async (trebaType: string, nameType: string) => {
+    try {
+      const response = await fetch(`http://localhost:3000/api/v2/treby/mass-download?trebaType=${encodeURIComponent(trebaType)}&nameType=${encodeURIComponent(nameType)}`);
+      if (!response.ok) throw new Error('Ошибка массового скачивания');
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${trebaType}_${nameType}_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err: any) {
+      alert(`Ошибка массового скачивания: ${err.message}`);
+    }
+  };
 
   const handleStatusChange = async (trebaId: number, status: 'PENDING' | 'PAID' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED') => {
     try {
@@ -65,15 +129,6 @@ const AdminTrebyPageV2: React.FC = () => {
       
     } catch (err: any) {
       alert(`Ошибка обновления статуса: ${err.message}`);
-    }
-  };
-
-  const handlePaymentStatusChange = async (paymentId: number, status: 'PAID' | 'FAILED' | 'REFUNDED') => {
-    try {
-      await PaymentApiV2.updatePaymentStatus(paymentId, status);
-      await loadTreby(pagination.page);
-    } catch (err: any) {
-      alert(`Ошибка обновления платежа: ${err.message}`);
     }
   };
 
@@ -191,6 +246,50 @@ const AdminTrebyPageV2: React.FC = () => {
             {error}
           </div>
         )}
+
+        {/* Массовая обработка */}
+        <div className="system-content-card" style={{ marginBottom: '1rem' }}>
+          <h3 style={{ marginBottom: '1rem' }}>Массовая обработка необработанных записок</h3>
+          {loadingMassSummary ? (
+            <div>Загрузка сводки...</div>
+          ) : massSummary.length > 0 ? (
+            <div className="system-table">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Тип требы</th>
+                    <th>Тип имен</th>
+                    <th>Заказов</th>
+                    <th>Имен</th>
+                    <th>Общая сумма</th>
+                    <th>Действия</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {massSummary.map((item, index) => (
+                    <tr key={index}>
+                      <td>{item.trebaType}</td>
+                      <td>{item.nameType === 'ZA_ZDRAVIE' ? 'За здравие' : 'За упокой'}</td>
+                      <td>{item.trebyCount}</td>
+                      <td>{item.namesCount}</td>
+                      <td>{item.totalPrice} ₽</td>
+                      <td>
+                        <button
+                          className="system-btn system-btn-sm system-btn-primary"
+                          onClick={() => massDownloadNames(item.trebaType, item.nameType)}
+                        >
+                          📥 Скачать все имена
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="system-text-muted">Нет необработанных записок</div>
+          )}
+        </div>
         
         <div className="system-content-card">
           <div className="system-table">
@@ -216,12 +315,22 @@ const AdminTrebyPageV2: React.FC = () => {
                     <td>{treba.period}</td>
                     <td>
                       <div style={{ maxWidth: '200px', overflow: 'hidden' }}>
+                        <div style={{ fontSize: '0.85em', fontWeight: 'bold', marginBottom: '0.25rem' }}>
+                          {treba.nameType === 'ZA_ZDRAVIE' ? 'За здравие' : 'За упокой'}
+                        </div>
                         {treba.names.map(name => (
                           <div key={name.id} style={{ fontSize: '0.9em' }}>
-                            {name.name} ({name.type === 'ZA_ZDRAVIE' ? 'за здравие' : 'за упокой'})
+                            {name.name}
                           </div>
                         ))}
                       </div>
+                      <button
+                        className="system-btn system-btn-sm system-btn-outline"
+                        onClick={() => downloadNamesForTreba(treba.id)}
+                        style={{ marginTop: '0.5rem', fontSize: '0.8em' }}
+                      >
+                        📥 Скачать
+                      </button>
                     </td>
                     <td>
                       {treba.calculatedPrice} {treba.currency}
@@ -271,16 +380,15 @@ const AdminTrebyPageV2: React.FC = () => {
                             onClick={() => handleStatusChange(treba.id, 'CANCELLED')}
                           >
                             ✗ Отменить
-                          </button>
-                        )}
-                        
-                        {/* Управление платежом */}
-                        {treba.payment && treba.payment.status === 'PENDING' && (
+                          </button>                        )}
+
+                        {/* Кнопка отмены */}
+                        {treba.status !== 'CANCELLED' && (
                           <button
-                            className="system-btn-outline system-btn-sm system-btn-success"
-                            onClick={() => handlePaymentStatusChange(treba.payment!.id, 'PAID')}
+                            className="system-btn-outline system-btn-sm system-btn-danger"
+                            onClick={() => handleStatusChange(treba.id, 'CANCELLED')}
                           >
-                            💳 Подтвердить оплату
+                            ❌ Отменить
                           </button>
                         )}
                       </div>

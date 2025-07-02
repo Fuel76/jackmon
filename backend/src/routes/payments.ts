@@ -36,7 +36,7 @@ router.get('/', async (req, res) => {
             status: true, 
             createdAt: true,
             names: {
-              select: { name: true, type: true }
+              select: { name: true }
             }
           }
         },

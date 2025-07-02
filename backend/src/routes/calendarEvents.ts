@@ -44,7 +44,7 @@ router.get('/', async (req, res) => {
             status: true,
             period: true,
             names: {
-              select: { name: true, type: true }
+              select: { name: true }
             },
             user: {
               select: { id: true, name: true, email: true }
@@ -140,7 +140,7 @@ router.get('/month/:year/:month', async (req, res) => {
             type: true, 
             status: true,
             names: {
-              select: { name: true, type: true }
+              select: { name: true }
             }
           }
         },
@@ -243,7 +243,7 @@ router.post('/', async (req, res) => {
             type: true, 
             status: true,
             names: {
-              select: { name: true, type: true }
+              select: { name: true }
             }
           }
         },

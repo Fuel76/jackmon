@@ -135,6 +135,7 @@ model CarouselImage {
 model Treba {
   id                Int                  @id @default(autoincrement())
   type              String
+  nameType          NameType             @default(ZA_ZDRAVIE) // Тип имен для всей требы
   note              String?              @db.Text
   createdAt         DateTime             @default(now())
   period            String               @default("Разовое")
@@ -160,7 +161,6 @@ model TrebaName {
   id              Int      @id @default(autoincrement())
   trebaId         Int
   name            String   @db.VarChar(255)
-  type            NameType @default(ZA_ZDRAVIE)
   rank            String?
   isValid         Boolean  @default(true)
   validationError String?
@@ -315,8 +315,7 @@ enum TrebaStatus {
 
 enum NameType {
   ZA_ZDRAVIE
-  ZA_UPOKOI
-  SOROKOUST
+  ZA_UPOKOY
 }
 
 enum PaymentStatus {

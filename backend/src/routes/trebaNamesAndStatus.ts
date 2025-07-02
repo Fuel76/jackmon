@@ -29,7 +29,6 @@ router.post('/treba/:trebaId/names', async (req, res) => {
       data: {
         trebaId: Number(trebaId),
         name,
-        type,
         rank,
         isValid: true,
         churchForm: null,

@@ -16,7 +16,6 @@ export interface TrebaNameV2 {
   id: number;
   trebaId: number;
   name: string;
-  type: 'ZA_ZDRAVIE' | 'ZA_UPOKOY';
   rank?: string;
   isValid: boolean;
   validationError?: string;
@@ -68,6 +67,7 @@ export interface TrebaEventV2 {
 export interface TrebaV2 {
   id: number;
   type: string;
+  nameType: 'ZA_ZDRAVIE' | 'ZA_UPOKOY';
   period: string;
   status: 'PENDING' | 'PAID' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
   note?: string;
@@ -101,10 +101,10 @@ export interface TrebaListResponseV2 {
 
 export interface CreateTrebaRequestV2 {
   type: string;
+  nameType: 'ZA_ZDRAVIE' | 'ZA_UPOKOY';
   period: string;
   names: Array<{
     name: string;
-    type: 'ZA_ZDRAVIE' | 'ZA_UPOKOY';
   }>;
   note?: string;
   email?: string;
