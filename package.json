@@ -3,13 +3,13 @@
 	"private": true,
 	"version": "0.0.0",
 	"scripts": {
-		"b": "pnpm --filter @monastyr/backend",
-		"w": "pnpm --filter @monastyr/webapp",
-		"dev": "pnpm -r --parallel dev",
-		"dev-build": "pnpm b build && pnpm -r --parallel dev",
-		"types": "concurrently \"pnpm --filter @monastyr/backend types\" \"pnpm --filter @monastyr/webapp types\"",
-		"lint": "concurrently 'pnpm b lint' 'pnpm w lint'",
-		"prettify": "pnpm -r --parallel prettify"
+		"b": "cd backend && npm run",
+		"w": "cd webapp && npm run",
+		"dev": "concurrently \"npm run b dev\" \"npm run w dev\"",
+		"dev-build": "npm run b build && npm run dev",
+		"types": "concurrently \"npm run b types\" \"npm run w types\"",
+		"lint": "concurrently \"npm run b lint\" \"npm run w lint\"",
+		"prettify": "concurrently \"npm run b prettify\" \"npm run w prettify\""
 	},
 	"devDependencies": {
 		"@types/express": "4.17.21",
