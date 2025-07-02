@@ -2,8 +2,8 @@
   "name": "monastyr-frontend",
   "version": "1.0.0",
   "build": {
-    "command": "npm install && npm run build",
-    "output": "dist"
+    "command": "cd webapp && npm install --legacy-peer-deps && npm run build",
+    "output": "webapp/dist"
   },
   "env": {
     "NODE_ENV": "production",

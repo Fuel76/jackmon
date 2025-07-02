@@ -2,19 +2,14 @@
   "name": "monastyr-backend",
   "version": "1.0.0",
   "build": {
-    "command": "npm install && npx prisma generate && npm run build",
-    "output": "dist"
+    "command": "cd backend && npm install --legacy-peer-deps && npx prisma generate && npm run build",
+    "output": "backend/dist"
   },
   "start": {
-    "command": "npm run start"
+    "command": "cd backend && npm start"
   },
   "env": {
     "NODE_ENV": "production",
-    "PORT": "3000",
-    "DATABASE_URL": "mysql://user:password@host:3306/dbname",
-    "JWT_SECRET": "your-secret-key",
-    "ADMIN_REGISTRATION_KEY": "your-admin-key",
-    "UPLOAD_DIR": "/app/uploads",
-    "MAX_FILE_SIZE": "10485760"
+    "PORT": "3000"
   }
 }
